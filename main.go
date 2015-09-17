@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"encoding/json"
 	"log"
+	"net/url"
+	"strconv"
 )
 
 var (
@@ -37,8 +39,11 @@ type Translation struct {
 
 func translate(text string) []string {
 	// make query to translation service
-	query := fmt.Sprintf("https://translate.yandex.net/api/v1.5/tr.json/translate?key=%s&lang=%s&text=%s",
-		yandex_key, "en-ru", text)
+	values := url.Values{}
+	values.Add("key", yandex_key)
+	values.Add("lang", "en-ru")
+	values.Add("text", text)
+	query := fmt.Sprintf("https://translate.yandex.net/api/v1.5/tr.json/translate?%s", values.Encode())
 	resp, err := http.Get(query)
 	if err != nil {
 		log.Println("HttpRequest error", err)
@@ -69,8 +74,11 @@ func onMessage(w http.ResponseWriter, r *http.Request) {
 }
 
 func sendMessage(chat Chat, text string) {
-	query := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage?chat_id=%v&text=%s",
-		telegram_key, chat.Id, text)
+	values := url.Values{}
+	values.Add("chat_id", strconv.FormatInt(chat.Id, 10))
+	values.Add("text", text)
+	query := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage?%s",
+		telegram_key, values.Encode())
 	log.Println(query)
 	http.Get(query)
 	//defer resp.Body.Close()
